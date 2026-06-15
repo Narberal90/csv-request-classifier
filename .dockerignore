@@ -1,0 +1,8 @@
+.venv/
+.env
+__pycache__/
+*.pyc
+*.pyo
+src/output.json
+src/report.md
+.vscode/
