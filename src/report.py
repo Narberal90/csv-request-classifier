@@ -1,15 +1,17 @@
 from collections import Counter
 from pathlib import Path
 
-REPORT_FILE = Path("report.md")
 
-
-def generate_report(results: list[dict], errors: list[dict], write_file: bool = True) -> str:
+def generate_report(
+    results: list[dict], errors: list[dict], output_path: Path | None = None
+) -> str:
     total = len(results)
 
     categories = Counter(r["category"] for r in results)
     priorities = Counter(r["priority"] for r in results)
-    departments = Counter(r["target_department"] for r in results if r.get("target_department"))
+    departments = Counter(
+        r["target_department"] for r in results if r.get("target_department")
+    )
     needs_clarification = [r for r in results if r.get("needs_clarification")]
 
     lines = [
@@ -30,13 +32,13 @@ def generate_report(results: list[dict], errors: list[dict], write_file: bool = 
     if errors:
         lines += [
             "\n## Failed Requests",
-            *[f"- [{e['id']}] parse/validation error" for e in errors],
+            *[f"- [{e['id']}] {e.get('reason', 'unknown error')}" for e in errors],
         ]
 
     report_text = "\n".join(lines)
 
-    if write_file:
-        REPORT_FILE.write_text(report_text, encoding="utf-8")
-        print(f"Report written to {REPORT_FILE}")
+    if output_path:
+        output_path.write_text(report_text, encoding="utf-8")
+        print(f"Report written to {output_path}")
 
     return report_text

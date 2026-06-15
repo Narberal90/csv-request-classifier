@@ -1,6 +1,7 @@
-from pydantic import BaseModel
-from typing import Optional
 from enum import Enum
+from typing import Optional
+
+from pydantic import BaseModel
 
 
 class Category(str, Enum):
@@ -26,17 +27,19 @@ class Confidence(str, Enum):
 
 class LLMClassification(BaseModel):
     """Schema that the LLM fills in — no 'id' here, we inject it ourselves."""
+
     category: Category
     target_department: Optional[str]
     priority: Priority
     short_summary: str
     requested_actions: list[str]
     needs_clarification: bool
-    confidence: Confidence  # how sure the model is about its own classification
+    confidence: Confidence
 
 
 class ClassifiedRequest(LLMClassification):
     """Full record stored in output.json, includes original metadata."""
+
     id: str
     channel: str
     timestamp: str

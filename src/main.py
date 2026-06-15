@@ -5,24 +5,26 @@ Endpoints:
   GET  /health         — health check
   POST /classify-file  — upload a CSV file, get structured JSON + report back
 """
+
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-import json
 import csv
+import json
+from datetime import datetime
 from io import StringIO
 
 import uvicorn
-from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
 
 from llm import classify_batch
 from report import generate_report
 
-BASE_DIR = Path(__file__).parent
-OUTPUT_FILE = BASE_DIR / "output.json"
+BASE_DIR = Path(__file__).parent.parent  # project root
+RESULTS_DIR = BASE_DIR / "results"
 
 app = FastAPI(
     title="Request Classifier",
@@ -50,23 +52,34 @@ async def classify_file(file: UploadFile = File(...)):
 
     rows = list(csv.DictReader(StringIO(text)))
     if not rows:
-        raise HTTPException(status_code=400, detail="CSV file is empty or has no data rows")
+        raise HTTPException(
+            status_code=400, detail="CSV file is empty or has no data rows"
+        )
 
     results, errors = await classify_batch(rows)
 
-    all_output = results + errors
-    OUTPUT_FILE.write_text(json.dumps(all_output, ensure_ascii=False, indent=2), encoding="utf-8")
+    timestamp = datetime.now().strftime("%H_%M_%S-%d-%m-%Y")
+    RESULTS_DIR.mkdir(exist_ok=True)
 
-    report_text = generate_report(results, errors, write_file=True)
+    output_file = RESULTS_DIR / f"output_{timestamp}.json"
+    output_file.write_text(
+        json.dumps(results + errors, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
 
-    return JSONResponse({
-        "total_rows": len(rows),
-        "classified": len(results),
-        "failed": len(errors),
-        "results": results,
-        "errors": errors,
-        "report": report_text,
-    })
+    report_text = generate_report(
+        results, errors, RESULTS_DIR / f"report_{timestamp}.md"
+    )
+
+    return JSONResponse(
+        {
+            "total_rows": len(rows),
+            "classified": len(results),
+            "failed": len(errors),
+            "results": results,
+            "errors": errors,
+            "report": report_text,
+        }
+    )
 
 
 if __name__ == "__main__":

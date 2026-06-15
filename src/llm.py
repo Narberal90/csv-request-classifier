@@ -56,7 +56,10 @@ async def classify_request(row: dict) -> ClassifiedRequest | str:
 
             if attempt < settings.max_retries - 1:
                 delay = settings.retry_delays[attempt]
-                print(f"[WARN] id={row.get('id')} — error, retry {attempt + 1}/{settings.max_retries - 1} in {delay}s")
+                print(
+                    f"[WARN] id={row.get('id')} — error, retry "
+                    + f"{attempt + 1}/{settings.max_retries - 1} in {delay}s"
+                )
                 await asyncio.sleep(delay)
                 continue
 
@@ -84,11 +87,13 @@ async def classify_batch(rows: list[dict]) -> tuple[list[dict], list[dict]]:
         if isinstance(result, ClassifiedRequest):
             results.append(result.model_dump(mode="json"))
         else:
-            errors.append({
-                "id": row.get("id"),
-                "error": True,
-                "reason": result,
-                "raw_text": row.get("raw_text"),
-            })
+            errors.append(
+                {
+                    "id": row.get("id"),
+                    "error": True,
+                    "reason": result,
+                    "raw_text": row.get("raw_text"),
+                }
+            )
 
     return results, errors

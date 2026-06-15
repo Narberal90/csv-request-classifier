@@ -67,7 +67,7 @@ Response:
 }
 ```
 
-Також у директорію `src/` записуються `output.json` та `report.md`.
+Також після першого запиту в корені створюється директорія `results`, куди записуються `output+time+date.json` та `report+time+date.md`.
 
 ---
 

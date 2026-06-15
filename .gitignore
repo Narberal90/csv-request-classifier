@@ -5,3 +5,4 @@ __pycache__/
 output.json
 report.md
 .vscode/
+results/
